@@ -1,0 +1,38 @@
+Prezados, 
+
+Venho por este meio apresentar a solução de infraestrutura que desenvolvemos para facilitar a realização do estudo de mercado pelo 5Gflix. Além disso, apresentamos as respostas às perguntas de negócio que recebemos de vocês, e que foram obtidas através de consultas SQL sobre os dados disponibilizados.
+
+Decidimos realizar uma transformação de dados que possibilitaria comparação da oferta de filmes dos dois concorrentes - a Amazon e a Netflix. Por conta da volumetria dos datasets, e com objetivo de minimizar o custo de armazenamento, tempo de processamento e recursos computacionais necessários para a transformação, usamos apenas um conjunto imprescindível para poder realizar o estudo. Vale ressaltar que nada nos impede de adicionar mais dados de outras fontes, caso for preciso realizar outros tipos de estudo. A solução proposta foi projetada para escalar de acordo com a demanda dos times da 5Gflix e com o volume de dados, sem prejudicar o desempenho do banco de dados.
+ 
+Dado que haverão acessos concorrentes ao banco para a realização de consultas, resolvemos utilizar o serviço gerenciado da Amazon Web Services - Amazon Redshift. É um data warehouse completamente gerenciado que facilita a realização de consultas com alto desempenho, mesmo sendo elas concorrentes. Desta forma o time de BI da 5Gflix conseguirá acessar os dados sempre quando precisar, obter os resultados rápido e sem ter que se preocupar pelo escalonamento e gerenciamento da infraestrutura por baixo. Além disso, o Redshift possui integração nativa com vários softwares de visualização de dados, tais como Tableau, PowerBI ou Amazon QuickSight para poder entender melhor os dados que dispomos. 
+
+Finalmente, seguem abaixo os insights que conseguimos adquirir a partir dos dados após realizar a transformação.
+
+A oferta da Netflix conta com 16656, e a da Amazon 309774 filmes. Apenas 4% dos filmes disponíveis na Amazon estão disponíveis na Netflix. Na media, os filmes da Amazon possuem melhores notas que os disponíveis na Netflix - a média da Amazon é 4.0/5.0e da Netflix é 3.2/5.0. Os dois provedores possuem a maior oferta dos filmes lançados em 2004. No fim, seguem anexados dois arquivos que apresentam os títulos e notas médias dos filmes melhor avaliados de cada um dos provedores que não estão disponíveis no catálogo do outro.
+
+Caso vocês tiverem alguma dúvida sobre a solução que propomos ou precisarem de alguma informação adicional a respeito, ficamos a disposição para agendar uma conversa.
+
+Obrigada,
+AM
+
+
+
+Boa tarde Daniel,  tudo bem?
+
+Acabei de finalizar o projeto para 5Gflix, gostaria de apresentar em breve a solução proposta. 
+
+O 5Gflix deseja realizar o estudo de mercado para formular a estratégia de negócio que irão adotar. O time de BI, que conta 3 pessoas, precisa de acesso frequente aos dados de mercado dos seus concorrentes para realização de consultas e geração de relatórios. 
+
+Foram fornecidos duas fontes de dados de dois concorrentes - Amazon e Netflix - que apresentam avaliações de filmes feitos pelos usuários. Preparei um script que carrega e transforma cada conjunto separadamente e no final os junta.  Para poder fazer a comparação entre as ofertas de cada um dos provedores, realizei uma transformação adicional que tem como objetivo unificar os títulos que se referem ao mesmo filme ou série.  
+
+Dado que haverão acessos concorrentes constantes ao banco de dados para realização de consultas durante um período de vários meses e também que as consultas envolvidas podem ser complexas com múltiplos “joins” dependendo do que o time de BI queira fazer, o  Amazon Redshift acabou atendendo melhor os requisitos (caso no futuro queiram realizar também consultas ad-hoc o Amazon Athena também poderá ser avaliado). Utilizando o Redshift poderemos garantir alto desempenho de consultas concorrentes para o time de BI e, possibilitar a escalabilidade de arquitetura. Sendo um serviço gerenciado, o cliente poderá focar na solução do problema de negócio dele, sem ter que se preocupar com o provisionamento e escalonamento de infraestrutura. Além disso, poderá adquirir novos insights ao visualizar os dados consultados no banco, graças à integração do Redshift com vários softwares de visualização de dados como Tableau, PowerBI ou Amazon QuickSight, entre outros via JDBC/ODBC. 
+
+Os dados foram salvos em formato Parquet para otimizar o carregamento/descarregamento e volume de armazenamento de dados. Sendo um formato colunar, acabou sendo a melhor solução o cliente poder realizar as agregações e outras análises até mesmo lendo diretamente do S3 (com o Redshift Spectrum). Uma estratégia de manter dados com acesso recorrente no cluster do Redshift e dados históricos de acesso infrequente no S3 para leitura com Redshift Spectrum pode ainda no futuro (com maior volume de dados) escalar e manter custos baixos.
+
+Finalmente, segue em anexo o arquivo zip que contém o conjunto final de dados após a transformação. O conjunto tem 4 colunas: nome da empresa, título do filme, ano de lançamento do filme e a nota dada pelo usuário. Adicionei também um arquivo .sql com as consultas que usei para poder responder às perguntas de negócio que recebemos do cliente. 
+
+Caso tenha alguma dúvida sobre a solução que proponho ou precisar de alguma informação adicional a respeito, fico à disposição para conversarmos.
+
+Muito obrigada, 
+AM
+
