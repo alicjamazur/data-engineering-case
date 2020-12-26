@@ -60,10 +60,10 @@ curl -O https://raw.githubusercontent.com/molly-moon/data-engineering-case/maste
 
 To launch the stack via the console, click on the button below. Upload the template file in the *Specify template* section. 
 
-[<img src='images/cloudformation-launch-stack.png'>](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=data-engineeing-stack) 
+[<img src='https://github.com/molly-moon/app-object-detection/blob/master/images/cloudformation-launch-stack.png?raw=true'>](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=data-engineeing-stack) 
 
 You can also launch the stack using AWS CLI. Note you need to substitute YOUR_PATH with your actual downloads folder path.
 
 ```
-aws cloudformation create-stack --stack-name object-detection-app --template-body file://YOUR_PATH/template.yml
+aws cloudformation create-stack --stack-name data-engineering-case --template-body file://YOUR_PATH/template.yml
 ```
