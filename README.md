@@ -1,5 +1,7 @@
 # Data Engineering Case
-The goal of this project is to provide a solution for Business Inteligence team who needs to perform a market study on publicly available data of their competitors. The project features extraction, transformation and loading of Amazon Customer Reviews dataset and Netflix Prize dataset with Pyspark to a data warehouse (Amazon Redshift). The execution of task was automated by using AWS Step Functions coded with AWS CloudFormation (check below for a shortcut to the template).
+The goal of this project is to provide a solution for Business Inteligence team who needs to perform a market study on publicly available data of their competitors. The project features extraction, transformation and loading of Amazon Customer Reviews dataset and Netflix Prize dataset with Pyspark to a data warehouse (Amazon Redshift). The execution of task was automated by using AWS Step Functions coded with AWS CloudFormation (check below for a shortcut to the template). 
+
+Finally, a set of [SQL queries](https://github.com/molly-moon/data-engineering-case/blob/master/artifacts/redshift-based-etl/SQL/business_queries.sql) was executed in order to respond to some business-related questions. [Here](https://raw.githubusercontent.com/molly-moon/data-engineering-case/master/emails.txt) you will find a business-oriented summary of the task, and also a slightly more technical one in a form of an email to stakeholders. 
 
 ### Data Extraction
 Both datasets present user ratings of movies and series. 
@@ -20,7 +22,7 @@ In order to be able to compare the same movie/series titles described differentl
   </p>
 <p align=center>
 
-### AWS Step Function 
+### AWS Step Function POC
 The state machine consists of 6 steps, each performed by AWS Glue. First 3 steps execute data transformation, subsequent 2 create tables and load data to s3 and the last one executes queries to answer some business related questions. 
 
 - Step 1: Amazon Customer Reviews dataset processing and load to S3,
@@ -35,7 +37,7 @@ The state machine consists of 6 steps, each performed by AWS Glue. First 3 steps
   </p>
 <p align=center>
 
-### AWS CloudFormation
+### AWS CloudFormation POC
 This template defines all necessary infrastructure, permissions and operations to execute the whole data engineering task. It creates the following resources:
 - A standard configured VPC (2 private and 2 public subnets, Internet Gateway, NAT Gateway, Route Tables),
 - Amazon Lambda function (necessary only for the initial setup),
@@ -47,7 +49,7 @@ This template defines all necessary infrastructure, permissions and operations t
 - a state machine with Step Functions,
 - permissions: IAM roles, IAM policies, NACLs, security groups.
 
-### Launch CloudFormation Stack
+### Launch CloudFormation Stack POC
 
 In order to launch the app you need to create resources with Amazon Web Services. For that you need an AWS account and optionally AWS CLI set up. Learn more [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html).
 
