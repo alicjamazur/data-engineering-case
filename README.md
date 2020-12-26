@@ -13,7 +13,7 @@ In order to be able to compare the same movie/series titles described differentl
 - removal of special signs, double/trailing spaces
 - removal of irrelevant columns for this problem.
 
- The final dataset containes the following columns: Company, Title, Year, Rating. It was saved to a columnar data format Parquet and loaded to Amazon Redshift. The diagram below ilustrates all data operations performed on each particular set of data. 
+[Here](https://github.com/molly-moon/data-engineering-case/blob/master/data-transformation.py) you will find the script to perform complete transformation. The final dataset containes the following columns: Company, Title, Year, Rating. It was saved to a columnar data format Parquet and loaded to Amazon Redshift. The diagram below ilustrates all data operations performed on each particular set of data. 
 
 <p align=center>
   <img src="https://github.com/molly-moon/data-engineering-case/blob/master/logical-diagram.png" height=400/>
@@ -47,3 +47,21 @@ This template defines all necessary infrastructure, permissions and operations t
 - State machine with Step Functions
 - permissions: IAM roles, IAM policies, NACLs, security groups
 
+### Launch CloudFormation Stack
+
+In order to launch the app you need to create resources with Amazon Web Services. For that you need an AWS account and optionally AWS CLI set up. Learn more [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html).
+
+Download CloudFormation template
+```
+curl -O https://raw.githubusercontent.com/molly-moon/data-engineering-case/master/template.yaml
+```
+
+To launch the stack via the console, click on the button below. Upload the template file in the *Specify template* section. 
+
+[<img src='images/cloudformation-launch-stack.png'>](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=data-engineeing-stack) 
+
+You can also launch the stack using AWS CLI. Note you need to substitute YOUR_PATH with your actual downloads folder path.
+
+```
+aws cloudformation create-stack --stack-name object-detection-app --template-body file://YOUR_PATH/template.yml
+```
