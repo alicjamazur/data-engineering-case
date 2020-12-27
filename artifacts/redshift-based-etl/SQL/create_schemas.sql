@@ -28,3 +28,11 @@ CREATE TABLE ratings(
   company varchar(40))
   
   SORTKEY AUTO;
+
+CREATE TABLE tmp_table(
+  avg_rating float4,
+  year int,
+  title varchar(60),
+  company varchar(40))
+  
+  SORTKEY AUTO;

@@ -3,7 +3,7 @@ import sys
 from awsglue.utils import getResolvedOptions
 import boto3
 
-#get job args
+# Get job args
 args = getResolvedOptions(sys.argv,['db','db_creds','bucket','file', 'redshift_role'])
 db = args['db']
 db_creds = args['db_creds']
@@ -11,18 +11,18 @@ bucket = args['bucket']
 file = args['file']
 redshift_role = args['redshift_role']
 
-#get sql statements
+# Get sql statements
 print(f'Getting SQL Statements from {bucket}/{file}...')
 s3 = boto3.client('s3') 
 sqls = s3.get_object(Bucket=bucket, Key=file)['Body'].read().decode('utf-8')
 sqls = sqls.split(';')
 
-#get database connection
-print('connecting...')
+# Get database connection
+print('Connecting...')
 con = rs_common.get_connection(db,db_creds)
 
-#run each sql statement
-print("connected...running query...")
+# Run each sql statement
+print("Connected... Running query...")
 print(f"Using the Redshift role {redshift_role}")
 
 results = []
