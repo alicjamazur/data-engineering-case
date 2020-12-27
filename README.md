@@ -1,7 +1,7 @@
 # Data Engineering Case
 The goal of this project is to provide a solution for Business Inteligence team who needs to perform a market study on publicly available data of their competitors. The project features extraction, transformation and loading of Amazon Customer Reviews dataset and Netflix Prize dataset with Pyspark to a data warehouse (Amazon Redshift). The execution of task was demonstrated by using AWS Step Functions coded with AWS CloudFormation. Below I provide a shortcut to create exactly the same architecture on AWS environment.
 
-Finally, a set of [SQL queries](https://github.com/molly-moon/data-engineering-case/blob/master/artifacts/redshift-based-etl/SQL/business_queries.sql) was executed in order to respond to some business-related questions. [Here](https://raw.githubusercontent.com/molly-moon/data-engineering-case/master/emails.txt) you will find a business-oriented summary of the task, and also a slightly more technical one in a form of an email to stakeholders. 
+Finally, a set of [SQL queries](https://github.com/molly-moon/data-engineering-case/blob/master/sql/business_queries.sql) was executed in order to respond to some business-related questions. [Here](https://raw.githubusercontent.com/molly-moon/data-engineering-case/master/emails.txt) you will find a business-oriented summary of the task, and also a slightly more technical one in a form of an email to stakeholders. 
 
 ### Data Extraction
 Both datasets present user ratings of movies and series. 
@@ -15,7 +15,7 @@ In order to be able to compare the same movie/series titles described differentl
 - removal of special signs, double/trailing spaces,
 - removal of irrelevant columns for this problem.
 
-[Here](https://github.com/molly-moon/data-engineering-case/blob/master/data-transformation.py) you will find the script to perform complete transformation. [The final dataset](https://github.com/molly-moon/data-engineering-case/blob/master/data/out/final_data.zip) contains the following columns: Company, Title, Year, Rating. It was saved to a columnar data format Parquet and loaded to Amazon Redshift. The diagram below ilustrates all data operations performed on each particular set of data. 
+[Here](https://github.com/molly-moon/data-engineering-case/blob/master/data-transformation.py) you will find the script to perform complete transformation. [The final dataset](https://github.com/molly-moon/data-engineering-case/tree/master/final_data) contains the following columns: Company, Title, Year, Rating. It was saved to a columnar data format Parquet and loaded to Amazon Redshift. The diagram below ilustrates all data operations performed on each particular set of data. 
 
 <p align=center>
   <img src="https://github.com/molly-moon/data-engineering-case/blob/master/logical-diagram.png" height=600/>
