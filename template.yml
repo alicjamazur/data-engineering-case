@@ -11,15 +11,8 @@ Parameters:
     Type: String
     Description: Name of the Secrets Manager secret for the cluster
     Default: reviewssecret
-  DataBucketName:
-    Type: String
-    MinLength: "1"
-    Description: "Name of the S3 bucket in which the source data will be uploaded. Bucket is created by this CFT."
-    Default: ala-data
-  ArtifactBucketName:
-    Type: String
-    MinLength: "1"
-    Default: ala-artifacts
+
+
 Resources:
 
   # VPC environment
@@ -386,8 +379,6 @@ Resources:
           Resource: 
           - !Join ['', ['arn:aws:s3:::', !Ref DataBucket ]]
           - !Join ['', ['arn:aws:s3:::', !Ref DataBucket, '/*']]
-          - !Join ['', ['arn:aws:s3:::', !Ref DataBucketName ]]
-          - !Join ['', ['arn:aws:s3:::', !Ref DataBucketName, '/*']]
         
       PolicyName: redshift_demo_policy
       Roles:
@@ -426,10 +417,8 @@ Resources:
           Resource:
           - !Join ['', ['arn:aws:s3:::', !Ref ScriptBucket] ]
           - !Join ['', ['arn:aws:s3:::', !Ref ScriptBucket, '/*'] ]
-          - !Join ['', ['arn:aws:s3:::', !Ref DataBucketName] ]
-          - !Join ['', ['arn:aws:s3:::', !Ref DataBucketName, '/*'] ]
-          - !Join ['', ['arn:aws:s3:::', !Ref ArtifactBucketName] ]
-          - !Join ['', ['arn:aws:s3:::', !Ref ArtifactBucketName, '/*'] ]
+          - !Join ['', ['arn:aws:s3:::', !Ref DataBucket] ]
+          - !Join ['', ['arn:aws:s3:::', !Ref DataBucket, '/*'] ]
           
         - Action:
           - secretsmanager:*
@@ -630,7 +619,7 @@ Resources:
       Command: 
         Name : pythonshell
         PythonVersion: 3
-        ScriptLocation: "s3://ala-artifacts/artifacts/redshift-based-etl/Python/rs_query.py" #"s3://ala-artifacts/scripts/run_sql_queries.py"
+        ScriptLocation: "s3://ala-artifacts/artifacts/redshift-based-etl/Python/rs_query.py" 
       DefaultArguments: {
           "--s3_output_path": !Sub "s3://${DataBucket}/out/tmp/queries",
           "--extra-py-files" : "s3://ala-artifacts/artifacts/redshift-based-etl/Python/redshift_module-0.1-py3.6.egg",
@@ -638,11 +627,10 @@ Resources:
           "--db_creds": "reviewssecret",
           "--bucket": "ala-artifacts",
           "--redshift_role": !GetAtt [ RedshiftRole, Arn ]
-          # "--file": "artifacts/redshift-based-etl/SQL/create_schemas.sql"     # etl.sql" 
       }
       MaxCapacity: 1
-      #MaxRetries: 0
-      # AllocatedCapacity: 5
+      ExecutionProperty:
+        MaxConcurrentRuns: 20
 
   AWSGlueJobRole:
     Type: "AWS::IAM::Role"
@@ -668,10 +656,10 @@ Resources:
                   - "s3:ListBucket"
                   - "s3:DeleteObject"
                 Resource: 
-                  - !Sub "arn:aws:s3:::${DataBucketName}"
-                  - !Sub "arn:aws:s3:::${DataBucketName}/*"
-                  - !Sub "arn:aws:s3:::${ArtifactBucketName}"
-                  - !Sub "arn:aws:s3:::${ArtifactBucketName}/*"
+                  - !Sub "arn:aws:s3:::${DataBucket}"
+                  - !Sub "arn:aws:s3:::${DataBucket}/*"
+                  - !Sub "arn:aws:s3:::${ScriptBucket}"
+                  - !Sub "arn:aws:s3:::${ScriptBucket}/*"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
       Path: "/"
@@ -686,7 +674,7 @@ Resources:
         "ScriptLocation": !Sub "s3://ala-artifacts/scripts/process_amazon_data.py"
       }
       DefaultArguments: {
-          "--s3_output_path": !Sub "s3://${DataBucketName}/out/tmp/amazon"
+          "--s3_output_path": !Sub "s3://${DataBucket}/out/amazon/"
       }
       MaxRetries: 0
       AllocatedCapacity: 5
@@ -703,7 +691,7 @@ Resources:
         "ScriptLocation": !Sub "s3://ala-artifacts/scripts/process_netflix_data.py"
       }
       DefaultArguments: {
-          "--s3_output_path": !Sub "s3://${DataBucketName}/out/tmp/netflix"
+          "--s3_output_path": !Sub "s3://${DataBucket}/out/netflix/"
       }
       WorkerType: G.1X
       NumberOfWorkers: 10
@@ -720,7 +708,7 @@ Resources:
         "ScriptLocation": !Sub "s3://ala-artifacts/scripts/join_data.py"
       }
       DefaultArguments: {
-          "--s3_output_path": !Sub "s3://${DataBucketName}/out/tmp/final-dataset"
+          "--s3_output_path": !Sub "s3://${DataBucket}/out/final-dataset/"
       }
       MaxRetries: 0
       AllocatedCapacity: 5
@@ -854,7 +842,7 @@ Resources:
                     }
                 }
               }
-          - { TopicArn: !Ref FailNotificationSNS, Database: !Ref RedshiftDBName, DBInfo: !Ref SecretsManagerSecret, Bucket: !Ref ArtifactBucketName  }
+          - { Database: !Ref RedshiftDBName, DBInfo: !Ref SecretsManagerSecret, Bucket: !Ref ScriptBucket }
  
         
       RoleArn: !GetAtt [ StatesExecutionRole, Arn ]
@@ -904,54 +892,4 @@ Outputs:
   StackName:
     Description: 'Stack name.'
     Value: !Sub '${AWS::StackName}'
-  AZs:
-    Description: 'AZs'
-    Value: 2
-  AZA:
-    Description: 'AZ of A'
-    Value: !Select [0, !GetAZs '']
-  AZB:
-    Description: 'AZ of B'
-    Value: !Select [1, !GetAZs '']
-  CidrBlock:
-    Description: 'The set of IP addresses for the VPC.'
-    Value: !GetAtt 'VPC.CidrBlock'
-  VPC:
-    Description: 'VPC.'
-    Value: !Ref VPC
-  SubnetsPublic:
-    Description: 'Subnets public.'
-    Value: !Join [',', [!Ref SubnetAPublic, !Ref SubnetBPublic]]
-  SubnetsPrivate:
-    Description: 'Subnets private.'
-    Value: !Join [',', [!Ref SubnetAPrivate, !Ref SubnetBPrivate]]
-  RouteTablesPrivate:
-    Description: 'Route tables private.'
-    Value: !Join [',', [!Ref RouteTablePrivate, !Ref RouteTableBPrivate]]
-  RouteTablesPublic:
-    Description: 'Route tables public.'
-    Value: !Join [',', [!Ref RouteTablePublic, !Ref RouteTableBPublic]]
-  SubnetAPublic:
-    Description: 'Subnet A public.'
-    Value: !Ref SubnetAPublic
-  RouteTableAPublic:
-    Description: 'Route table A public.'
-    Value: !Ref RouteTablePublic
-  SubnetAPrivate:
-    Description: 'Subnet A private.'
-    Value: !Ref SubnetAPrivate
-  RouteTableAPrivate:
-    Description: 'Route table A private.'
-    Value: !Ref RouteTablePrivate
-  SubnetBPublic:
-    Description: 'Subnet B public.'
-    Value: !Ref SubnetBPublic
-  RouteTableBPublic:
-    Description: 'Route table B public.'
-    Value: !Ref RouteTableBPublic
-  SubnetBPrivate:
-    Description: 'Subnet B private.'
-    Value: !Ref SubnetBPrivate
-  RouteTableBPrivate:
-    Description: 'Route table B private.'
-    Value: !Ref RouteTableBPrivate
+

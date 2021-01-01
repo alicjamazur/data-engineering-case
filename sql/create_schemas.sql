@@ -29,8 +29,8 @@ CREATE TABLE ratings(
   
   SORTKEY AUTO;
 
-CREATE TABLE tmp_table(
-  avg_rating float4,
+CREATE TABLE avg_ratings(
+  avg_rating decimal(3,2),
   year int,
   title varchar(60),
   company varchar(40))
