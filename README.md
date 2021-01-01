@@ -15,7 +15,7 @@ In order to be able to compare the same movie/series titles described differentl
 - removal of special signs, double/trailing spaces,
 - removal of irrelevant columns for this problem.
 
-[Here](https://github.com/molly-moon/data-engineering-case/blob/master/data-transformation.py) you will find the script to perform complete transformation. [The final dataset](https://github.com/molly-moon/data-engineering-case/tree/master/final_data) contains the following columns: Company, Title, Year, Rating. It was saved to a columnar data format Parquet and loaded to Amazon Redshift. The diagram below ilustrates all data operations performed on each particular set of data. 
+[Here](https://github.com/molly-moon/data-engineering-case/blob/master/data-transformation.py) you will find the script to perform complete transformation. [The final dataset](https://github.com/molly-moon/data-engineering-case/tree/master/final_data.parquet) contains the following columns: Company, Title, Year, Rating. It was saved to a columnar data format Parquet and loaded to Amazon Redshift. The diagram below ilustrates all data operations performed on each particular set of data. 
 
 <p align=center>
   <img src="https://github.com/molly-moon/data-engineering-case/blob/master/logical-diagram.png" height=600/>
