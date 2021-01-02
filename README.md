@@ -1,4 +1,4 @@
-# Data Engineering Case: ETL & Data Querying 
+# Data Engineering Case: ETL Workflow
 The goal of this project is to provide a solution for Business Inteligence team who needs to perform a market study on publicly available data of their competitors. The project features extraction, transformation and loading of Amazon Customer Reviews dataset and Netflix Prize dataset with Pyspark to a data warehouse (Amazon Redshift). The execution of task was demonstrated by using AWS Step Functions coded with AWS CloudFormation. Below I provide a shortcut to create exactly the same architecture on AWS environment.
 
 Finally, a set of [SQL queries](https://github.com/molly-moon/data-engineering-case/blob/master/sql/business_queries.sql) was executed in order to respond to some business-related questions. [Here](https://raw.githubusercontent.com/molly-moon/data-engineering-case/master/emails.txt) you will find a business-oriented summary of the task, and also a slightly more technical one in a form of an email to stakeholders. 
@@ -22,23 +22,25 @@ In order to be able to compare the same movie/series titles described differentl
   </p>
 <p align=center>
 
-## State Machine Demo: ETL & Data Quering within Redshift
-The state machine built with AWS Step Functions consists of 6 steps, each performed by AWS Glue. First 3 steps execute data transformation, subsequent 2 create tables and load data to s3 and the last one executes queries within Redshift to answer some business related questions. 
+## State Machine Demo: Orchestrated ETL Workflow
+The state machine built with AWS Step Functions consists of 5 steps, each performed by AWS Glue. First 2 steps execute data transformation, subsequent 2 create tables and load data to s3 and the last one executes queries within Redshift to answer some business related questions. 
 
-- Step 1: Amazon Customer Reviews dataset processing and load to S3,
-- Step 2: Netflix Prize dataset processing and load to S3,
-- Step 3: Dataset join, further transformation and unload to S3,
-- Step 4: Creation of schema and tables in Redshift,
-- Step 5: Data insert from S3 to Redshift,
-- Step 6: Data querying within Redshift and unload to S3. 
+- Step 1: 
+    - Amazon Customer Reviews dataset processing and unload to S3,
+    - Netflix Prize dataset processing and unload to S3,
+- Step 2: Datasets join, further transformations and unload to S3,
+- Step 3: Creation of schema and tables in Glue and Redshift,
+- Step 4: Data insertion to Redshift,
+- Step 5: Data querying within Redshift and unload of results to S3. 
 
 <p align=center>
   <img src="https://github.com/molly-moon/data-engineering-case/blob/master/images/state-machine.png" height=400/>
   </p>
 <p align=center>
 
-### Resources Provisioned
-This template defines all necessary infrastructure, permissions and operations to execute the whole data engineering task. It creates the following resources:
+## Launch CloudFormation Stack and Run State Machine 
+
+In order to launch the app you need to create resources with Amazon Web Services. Below template defines all necessary infrastructure, permissions and operations to execute the whole data engineering task. It creates the following resources:
 - A standard configured VPC (2 private and 2 public subnets, Internet Gateway, NAT Gateway, Route Tables),
 - Amazon Lambda function (necessary only for the initial setup),
 - an S3 bucket,
@@ -48,10 +50,6 @@ This template defines all necessary infrastructure, permissions and operations t
 - 4 different AWS Glue jobs,
 - a state machine with Step Functions,
 - permissions: IAM roles, IAM policies, NACLs, security groups.
-
-### Launch CloudFormation Stack and Run State Machine 
-
-In order to launch the app you need to create resources with Amazon Web Services. For that you need an AWS account and optionally AWS CLI set up. Learn more [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html).
 
 1. To launch the stack via the console, click on the button below (if necessary, change the default deployment region). Leave default stack parameters.
 
