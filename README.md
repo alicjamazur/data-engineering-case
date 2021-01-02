@@ -3,12 +3,11 @@ The goal of this project is to provide a solution for Business Inteligence team 
 
 Finally, a set of [SQL queries](https://github.com/molly-moon/data-engineering-case/blob/master/sql/business_queries.sql) was executed in order to respond to some business-related questions. [Here](https://raw.githubusercontent.com/molly-moon/data-engineering-case/master/emails.txt) you will find a business-oriented summary of the task, and also a slightly more technical one in a form of an email to stakeholders. 
 
-## Data Extraction
+## Data Transformation
 Both datasets present user ratings of movies and series. 
 - Netflix Prize data is a dataset publicly [available on Kaggle](https://www.kaggle.com/netflix-inc/netflix-prize-data),
 - Amazon Customer Reviews is a dataset publicly [available on Amazon S3](https://s3.amazonaws.com/amazon-reviews-pds/readme.html). Only a small part refering to movies, videos, and series was used in this project.
 
-## Data Transformation and Loading
 In order to be able to compare the same movie/series titles described differently by both companies, a set of transformations was made, among other things: 
 - removal of text in parenthesis,
 - standardization of information about the movie/series, if present in the title,
