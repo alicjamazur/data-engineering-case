@@ -11,6 +11,10 @@ Parameters:
     Type: String
     Description: Name of the Secrets Manager secret for the cluster
     Default: reviewssecret
+  ArtifactsBucket:
+    Type: String
+    Description: Bucket with source data and PySpark scripts.
+    Default: ala-artifacts
 
 
 Resources:
@@ -419,7 +423,6 @@ Resources:
           - !Join ['', ['arn:aws:s3:::', !Ref ScriptBucket, '/*'] ]
           - !Join ['', ['arn:aws:s3:::', !Ref DataBucket] ]
           - !Join ['', ['arn:aws:s3:::', !Ref DataBucket, '/*'] ]
-          
         - Action:
           - secretsmanager:*
           Effect: Allow
@@ -453,7 +456,7 @@ Resources:
            LOGGER = logging.getLogger()
            LOGGER.setLevel(logging.INFO)
 
-           SCRIPT_SOURCE_BUCKET = 'ala-artifacts'
+           SCRIPT_SOURCE_BUCKET = '${ArtifactsBucket}'
            SCRIPT_SOURCE_FOLDER = 'artifacts/redshift-based-etl'
            DEST_BUCKET= '${ScriptBucket}'
            UNLOAD_DEST_BUCKET = '${DataBucket}'
@@ -591,9 +594,9 @@ Resources:
                               - RedshiftCluster
                               - Endpoint.Port
                         - "/"
-                        - "ratings" 
-                  "USERNAME": master
-                  "PASSWORD": password
+                        - !Sub "${RedshiftDBName}"
+                  "USERNAME": !Join ['', ['{{resolve:secretsmanager:', !Ref RedshiftSecret, ':SecretString:username}}' ]]
+                  "PASSWORD": !Join ['', ['{{resolve:secretsmanager:', !Ref RedshiftSecret, ':SecretString:password}}' ]]
             Name: GlueRedshiftConnection
           CatalogId: !Ref AWS::AccountId
   
@@ -619,13 +622,13 @@ Resources:
       Command: 
         Name : pythonshell
         PythonVersion: 3
-        ScriptLocation: "s3://ala-artifacts/artifacts/redshift-based-etl/Python/rs_query.py" 
+        ScriptLocation: !Sub "s3://${ScriptBucket}/python/rs_query.py" 
       DefaultArguments: {
-          "--s3_output_path": !Sub "s3://${DataBucket}/out/tmp/queries",
-          "--extra-py-files" : "s3://ala-artifacts/artifacts/redshift-based-etl/Python/redshift_module-0.1-py3.6.egg",
-          "--db": "ratings",
-          "--db_creds": "reviewssecret",
-          "--bucket": "ala-artifacts",
+          "--s3_output_path": !Sub "s3://${DataBucket}/out/queries",
+          "--extra-py-files" : !Sub "s3://${ScriptBucket}/python/redshift_module-0.1-py3.6.egg",
+          "--db": !Sub "${RedshiftDBName}",
+          "--db_creds": !Sub "${SecretsManagerSecret}",
+          "--bucket": !Sub "${ScriptBucket}",
           "--redshift_role": !GetAtt [ RedshiftRole, Arn ]
       }
       MaxCapacity: 1
@@ -667,11 +670,12 @@ Resources:
   ProcessAmazonData:
     Type: "AWS::Glue::Job"
     Properties:
+      GlueVersion: 2.0
       Role: !Ref AWSGlueJobRole
       Name: "ProcessAmazonData"
       Command: {
         "Name" : "glueetl",
-        "ScriptLocation": !Sub "s3://ala-artifacts/scripts/process_amazon_data.py"
+        "ScriptLocation": !Sub "s3://${ArtifactsBucket}/scripts/process_amazon_data.py"
       }
       DefaultArguments: {
           "--s3_output_path": !Sub "s3://${DataBucket}/out/amazon/"
@@ -684,11 +688,11 @@ Resources:
     Properties:
       Role: !Ref AWSGlueJobRole
       Name: "ProcessNetflixData"
-      GlueVersion: 0.9
+      GlueVersion: 2.0
 
       Command: {
         "Name" : "glueetl",
-        "ScriptLocation": !Sub "s3://ala-artifacts/scripts/process_netflix_data.py"
+        "ScriptLocation": !Sub "s3://${ArtifactsBucket}/scripts/process_netflix_data.py"
       }
       DefaultArguments: {
           "--s3_output_path": !Sub "s3://${DataBucket}/out/netflix/"
@@ -701,18 +705,19 @@ Resources:
   JoinAndProcessData:
     Type: "AWS::Glue::Job"
     Properties:
+      GlueVersion: 2.0
       Role: !Ref AWSGlueJobRole
       Name: "JoinAndProcessData"
       Command: {
         "Name" : "glueetl",
-        "ScriptLocation": !Sub "s3://ala-artifacts/scripts/join_data.py"
+        "ScriptLocation": !Sub "s3://${ArtifactsBucket}/scripts/join_data.py"
       }
       DefaultArguments: {
-          "--s3_output_path": !Sub "s3://${DataBucket}/out/final-dataset/"
+          "--s3_output_path": !Sub "s3://${DataBucket}/out/"
       }
       MaxRetries: 0
-      AllocatedCapacity: 5
-
+      WorkerType: G.1X
+      NumberOfWorkers: 25
 
   GlueJobStateMachine:
     Type: AWS::StepFunctions::StateMachine
@@ -721,129 +726,94 @@ Resources:
         Fn::Sub:
           - |
               {
-                "StartAt": "ProcessAmazonData",
+                "StartAt": "MyParallelState",
                 "States": {
-
-                  "ProcessAmazonData": {
-                    "Type": "Task",
-                    "Resource": "arn:aws:states:::glue:startJobRun.sync",
-                    "Parameters":{
-                      "JobName":"${ProcessAmazonData}"
+                  "MyParallelState": {
+                "Type": "Parallel",
+                "Next": "JoinAndProcessData",
+                "Branches": [
+                  {
+                    "StartAt": "ProcessAmazonData",
+                    "States": {
+                      "ProcessAmazonData": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+                         "Parameters":{
+                      "JobName":"ProcessAmazonData"
                     },
-                      "Next": "ProcessNetflixData",
-                      "Catch": [
-                        {
-                          "ErrorEquals": ["States.TaskFailed"], 
-                          "Next": "NotifyFailure",
-                          "ResultPath": "$.cause"
-                        }
-                      ]
-                   },
-
-                  "ProcessNetflixData": {
-                    "Type": "Task",
-                    "Resource": "arn:aws:states:::glue:startJobRun.sync",
-                    "Parameters":{
-                      "JobName":"${ProcessNetflixData}"
+                        
+                        "End": true
+                      }
+                    }
+                  },
+                  {
+                    "StartAt": "ProcessNetflixData",
+                    "States": {
+                      "ProcessNetflixData": {
+                        "Type": "Task",
+                         "Resource": "arn:aws:states:::glue:startJobRun.sync",
+                         "Parameters":{
+                      "JobName":"ProcessNetflixData"
                     },
-                      "Next": "JoinAndProcessData",
-                      "Catch": [
-                        {
-                          "ErrorEquals": ["States.TaskFailed"], 
-                          "Next": "NotifyFailure",
-                          "ResultPath": "$.cause"
-                        }
-                      ]
-                   },
-
+                        "End": true
+                      }
+                    }
+                  }
+                ]}
+                ,
+                 
                   "JoinAndProcessData": {
                     "Type": "Task",
                     "Resource": "arn:aws:states:::glue:startJobRun.sync",
                     "Parameters":{
-                      "JobName":"${JoinAndProcessData}"
+                      "JobName":"JoinAndProcessData"
                     },
-                      "Next": "CreateTables",
-                      "Catch": [
-                        {
-                          "ErrorEquals": ["States.TaskFailed"], 
-                          "Next": "NotifyFailure",
-                          "ResultPath": "$.cause"
-                        }
-                      ]
+                    "Next": "CreateTables"
                    },
-
-                  "CreateTables": {
+               "CreateTables": {
                     "Type": "Task",
                     "Resource": "arn:aws:states:::glue:startJobRun.sync",
                     "Parameters":{
-                      "JobName":"${QueryRedshift}",
+                      "JobName":"QueryRedshift",
                       "Arguments":{
-                        "--file": "artifacts/redshift-based-etl/SQL/create_schemas.sql"
+                        "--file": "sql/create_schemas.sql"
                       }
                     },
-                      "Next": "LoadRedshift",
-                      "Catch": [
-                        {
-                          "ErrorEquals": ["States.TaskFailed"], 
-                          "Next": "NotifyFailure",
-                          "ResultPath": "$.cause"
-                        }
-                      ]
+                      "Next": "LoadRedshift"
                    },
                    
                   "LoadRedshift": {
                     "Type": "Task",
                     "Resource": "arn:aws:states:::glue:startJobRun.sync",
                     "Parameters":{
-                      "JobName":"${QueryRedshift}",
+                      "JobName":"QueryRedshift",
                       "Arguments":{
-                        "--file": "artifacts/redshift-based-etl/SQL/load_redshift.sql"
+                        "--file": "sql/load_redshift.sql"
                       }
                     },
-                      "Next": "RunQueries",
-                      "Catch": [
-                        {
-                          "ErrorEquals": ["States.TaskFailed"], 
-                          "Next": "NotifyFailure",
-                          "ResultPath": "$.cause"
-                        }
-                      ]
+                      "Next": "RunQueries"
                    },
 
                   "RunQueries": {
                     "Type": "Task",
                     "Resource": "arn:aws:states:::glue:startJobRun.sync",
                     "Parameters":{
-                      "JobName":"${QueryRedshift}",
+                      "JobName":"QueryRedshift",
                       "Arguments":{
                         "--db":"${Database}", 
                         "--db_creds":"${DBInfo}",
                         "--bucket": "${Bucket}",
-                        "--file": "artifacts/redshift-based-etl/SQL/business_queries.sql"
+                        "--file": "sql/business_queries.sql"
                       }
                     },
-                      "End": true,
-                      "Catch": [
-                        {
-                          "ErrorEquals": ["States.TaskFailed"], 
-                          "Next": "NotifyFailure",
-                          "ResultPath": "$.cause"
-                        }
-                      ]
-                   },
-                    "NotifyFailure": {
-                      "Type": "Task", 
-                      "Resource": "arn:aws:states:::sns:publish", 
-                      "Parameters": {
-                        "TopicArn": "${TopicArn}", 
-                        "Message.$": "$.cause"
-                      },
                       "End": true
-                    }
+                   }
+
                 }
               }
+
           - { Database: !Ref RedshiftDBName, DBInfo: !Ref SecretsManagerSecret, Bucket: !Ref ScriptBucket }
- 
+
         
       RoleArn: !GetAtt [ StatesExecutionRole, Arn ]
       
@@ -889,7 +859,18 @@ Resources:
 
 
 Outputs:
-  StackName:
-    Description: 'Stack name.'
-    Value: !Sub '${AWS::StackName}'
+  SecretsManagerSecret:
+    Description: 'Redshift authentication data'
+    Value: !Ref RedshiftSecret
+  GlueRedshiftConnection:
+    Description: 'JDBC connection to Redshift for Glue'
+    Value: !Ref GlueRedshiftConnection
+  StateMachine:
+    Description: 'State Machine that performs ETL jobs and queries Redshift'
+    Value: !Ref GlueJobStateMachine
+  Bucket:
+    Description: 'Bucket with transformed data and Redshift query results'
+    Value: !Ref DataBucket
+
+
 

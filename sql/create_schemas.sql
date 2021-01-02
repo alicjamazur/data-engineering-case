@@ -16,7 +16,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
 LOCATION 
-  's3://ala-data/out/final_data.parquet'
+  's3://bucket/out/final_data.parquet'
 TABLE PROPERTIES 
   ('PARQUET.COMPRESS'='SNAPPY');
 
