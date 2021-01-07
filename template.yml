@@ -662,6 +662,8 @@ Resources:
                 Resource: 
                   - !Sub "arn:aws:s3:::${DataBucket}"
                   - !Sub "arn:aws:s3:::${DataBucket}/*"
+                  - !Sub "arn:aws:s3:::${ArtifactsBucket}"
+                  - !Sub "arn:aws:s3:::${ArtifactsBucket}/*"
                   - !Sub "arn:aws:s3:::${ScriptBucket}"
                   - !Sub "arn:aws:s3:::${ScriptBucket}/*"
       ManagedPolicyArns:
