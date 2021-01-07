@@ -321,6 +321,7 @@ Resources:
     
 
   RedshiftCluster:
+    DependsOn: RedshiftSecret
     Properties:
       ClusterSubnetGroupName:
         Ref: RedshiftSubnetGroup

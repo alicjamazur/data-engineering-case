@@ -52,7 +52,7 @@ In order to launch the app you need to create resources with Amazon Web Services
 
 1. To launch the stack via the console, click on the button below (if necessary, change the default deployment region). Leave default stack parameters.
 
-[<img src='https://github.com/molly-moon/app-object-detection/blob/master/images/cloudformation-launch-stack.png?raw=true'>](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=etl_queries&templateURL=https://ala-artifacts.s3.us-east-2.amazonaws.com/template.yml) 
+[<img src='https://github.com/molly-moon/app-object-detection/blob/master/images/cloudformation-launch-stack.png?raw=true'>](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=etl-queries&templateURL=https://ala-artifacts.s3.us-east-2.amazonaws.com/template.yml) 
 
 Stack creation time: ~3 min
 
